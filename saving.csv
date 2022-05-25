@@ -1,0 +1,4 @@
+Algorithm,Mode,Dictionary?,Compression Rate,Estimated Fee Savings
+zlib,total,no,24.15%,24.14%
+zlib,total,yes,22.18%,22.18%
+Brotli,total,no,48.06%,48.06%
