@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "license": "MIT",
   "scripts": {
-    "start": "node ./dataCompression.js"
+    "start": "node ./dataCompressionTx.js"
   },
   "dependencies": {
     "brotli": "^1.3.2",

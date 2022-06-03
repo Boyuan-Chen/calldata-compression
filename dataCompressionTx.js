@@ -49,7 +49,7 @@ const main = async () => {
       promiseInput.push(getTransaction(L2Web3, searchingBlock));
     } else {
       console.log(
-        `Searching Status: \nBlock Range: ${searchingBlock - promiseInput.length}-${searchingBlock} \nRatio: ${
+        `\nSearching Status: Block Range: ${searchingBlock - promiseInput.length}-${searchingBlock} Progess: ${
           Number((1 - (latestBlockNumber - searchingBlock) / searchRange).toFixed(4)) * 100 + "%"
         }`
       );
@@ -151,7 +151,7 @@ function sleep(ms) {
 const calculateGas = (payload) => {
   totalGas = 0;
   for (const cha of remove0x(payload)) {
-    if (cha === 0) {
+    if (cha === '0') {
       totalGas += 4;
     } else {
       totalGas += 16;
