@@ -1,0 +1,5 @@
+Algorithm,Code Base,Time Duration
+zlib,go,445.014418ms
+Brotli,go,1.209751709s
+zlib,node,28.2 ms
+Brotli,node,2030 ms

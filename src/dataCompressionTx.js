@@ -1,9 +1,16 @@
 const ethers = require("ethers");
+const fs = require('fs');
+const path = require("path");
 
-// https://github.com/google/brotli
-const brotli = require("brotli");
-// https://nodejs.org/api/zlib.html
-const zlib = require("zlib");
+const {
+  remove0x,
+  sleep,
+  calculateGas,
+  brotliCompression,
+  zlibCompression,
+  zlibDictionaryCompression,
+  getTransaction,
+} = require("./utils");
 
 const L2_NODE_WEB3_URL = "https://replica.boba.network";
 
@@ -37,9 +44,12 @@ const main = async () => {
   let results = [];
 
   // Settings
-  let searchRange = 100000;
+  let searchRange = 1000;
   let maxSearchRange = 1000;
   let searchingBlock = latestBlockNumber - searchRange;
+
+  // raw tx
+  const rawTransactions = [];
 
   while (searchingBlock <= latestBlockNumber) {
     if (
@@ -49,7 +59,7 @@ const main = async () => {
       promiseInput.push(getTransaction(L2Web3, searchingBlock));
     } else {
       console.log(
-        `\nSearching Status: Block Range: ${searchingBlock - promiseInput.length}-${searchingBlock} Progess: ${
+        `Searching Status: \nBlock Range: ${searchingBlock - promiseInput.length}-${searchingBlock} \nRatio: ${
           Number((1 - (latestBlockNumber - searchingBlock) / searchRange).toFixed(4)) * 100 + "%"
         }`
       );
@@ -86,6 +96,8 @@ const main = async () => {
         rawTransaction =
           "0x" + turingVersion + "0000" + remove0x(rawTransaction);
       }
+
+      rawTransactions.push(rawTransaction);
       totalTxs++;
 
       // Compression algorithm
@@ -112,6 +124,12 @@ const main = async () => {
     }
   }
 
+  const dumpPath = path.resolve(__dirname, '../data/transactionsData.json')
+  await fs.promises.writeFile(
+    dumpPath,
+    JSON.stringify(rawTransactions),
+  )
+
   // Final report
   const estimateZlibFeeSavings =
     1 - totalCompressionGasCost.zlib / totalPreGasCost;
@@ -126,77 +144,15 @@ const main = async () => {
     1 - totalCompressionBytes.brotli / totalPreBytes;
 
   console.log({
-    "Zlib Compression Ratio": compressionZlibRatio,
+    "Zlib compression Ratio": compressionZlibRatio,
     "Zlib Estimated Fee Savings": estimateZlibFeeSavings,
-    "Zlib Dictionary Compression Ratio": compressionZlibDictionaryRatio,
+    "Zlib Dictionary compression Ratio": compressionZlibDictionaryRatio,
     "Zlib Dictionary Estimated Fee Savings": estimateZlibDictionaryFeeSavings,
-    "Brotli Compression Ratio": compressionBrotliRatio,
+    "Brotli compression Ratio": compressionBrotliRatio,
     "Brotli Estimated Fee Savings": estimateBrotliFeeSavings,
     "Total TXs": totalTxs,
     "Bad TX Results": countBadResults,
   });
-};
-
-const remove0x = (str) => {
-  if (str === undefined) {
-    return str;
-  }
-  return str.startsWith("0x") ? str.slice(2) : str;
-};
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-const calculateGas = (payload) => {
-  totalGas = 0;
-  for (const cha of remove0x(payload)) {
-    if (cha === '0') {
-      totalGas += 4;
-    } else {
-      totalGas += 16;
-    }
-  }
-  return totalGas;
-};
-
-const brotliCompression = (payload) => {
-  const compressionBuffer = brotli.compress(remove0x(payload), {
-    mode: 1,
-    quality: 11,
-  });
-  const compressionHex = Buffer.from(compressionBuffer).toString("hex");
-  return compressionHex;
-};
-
-const zlibCompression = (payload) => {
-  const compressionBuffer = zlib.deflateSync(payload, {
-    level: 9,
-  });
-  const compressionHex = Buffer.from(compressionBuffer).toString("hex");
-  return compressionHex;
-};
-
-const zlibDictionaryCompression = (payload) => {
-  const dictionary = Buffer.from(
-    "d86D22c02E301BE7C35e3Ef20962f614cAf32B7662cc86abac3fb09a19c8547391580f63a668613f".toLocaleLowerCase(),
-    "utf-8"
-  );
-  const compressionBuffer = zlib.deflateSync(payload, {
-    level: 9,
-    dictionary,
-  });
-  const compressionHex = Buffer.from(compressionBuffer).toString("hex");
-  return compressionHex;
-};
-
-const getTransaction = async (L2Web3, blockNumber) => {
-  const block = await L2Web3.getBlock(blockNumber);
-  const transactionHash = block.transactions[0];
-  const transaction = await L2Web3.send("eth_getTransactionByHash", [
-    transactionHash,
-  ]);
-  return transaction;
 };
 
 main();
