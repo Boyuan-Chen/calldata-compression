@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "license": "MIT",
   "scripts": {
-    "start": "node ./dataCompression.js"
+    "start:tx": "node ./src/dataCompressionTx.js",
+    "start:batch": "node ./src/dataCompressionBatch.js",
+    "test:speed:go": "cd go && go get && go run ./speedTest.go",
+    "test:speed:node": "node ./src/speedTest.js"
   },
   "dependencies": {
     "brotli": "^1.3.2",
