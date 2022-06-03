@@ -126,11 +126,11 @@ const main = async () => {
     1 - totalCompressionBytes.brotli / totalPreBytes;
 
   console.log({
-    "Zlib compression Ratio": compressionZlibRatio,
+    "Zlib Compression Ratio": compressionZlibRatio,
     "Zlib Estimated Fee Savings": estimateZlibFeeSavings,
-    "Zlib Dictionary compression Ratio": compressionZlibDictionaryRatio,
+    "Zlib Dictionary Compression Ratio": compressionZlibDictionaryRatio,
     "Zlib Dictionary Estimated Fee Savings": estimateZlibDictionaryFeeSavings,
-    "Brotli compression Ratio": compressionBrotliRatio,
+    "Brotli Compression Ratio": compressionBrotliRatio,
     "Brotli Estimated Fee Savings": estimateBrotliFeeSavings,
     "Total TXs": totalTxs,
     "Bad TX Results": countBadResults,
