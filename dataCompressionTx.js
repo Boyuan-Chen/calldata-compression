@@ -49,7 +49,7 @@ const main = async () => {
       promiseInput.push(getTransaction(L2Web3, searchingBlock));
     } else {
       console.log(
-        `Searching Status: \nBlock Range: ${searchingBlock - promiseInput.length}-${searchingBlock} \nRatio: ${
+        `\nSearching Status: Block Range: ${searchingBlock - promiseInput.length}-${searchingBlock} Progess: ${
           Number((1 - (latestBlockNumber - searchingBlock) / searchRange).toFixed(4)) * 100 + "%"
         }`
       );
@@ -126,11 +126,11 @@ const main = async () => {
     1 - totalCompressionBytes.brotli / totalPreBytes;
 
   console.log({
-    "Zlib compression Ratio": compressionZlibRatio,
+    "Zlib Compression Ratio": compressionZlibRatio,
     "Zlib Estimated Fee Savings": estimateZlibFeeSavings,
-    "Zlib Dictionary compression Ratio": compressionZlibDictionaryRatio,
+    "Zlib Dictionary Compression Ratio": compressionZlibDictionaryRatio,
     "Zlib Dictionary Estimated Fee Savings": estimateZlibDictionaryFeeSavings,
-    "Brotli compression Ratio": compressionBrotliRatio,
+    "Brotli Compression Ratio": compressionBrotliRatio,
     "Brotli Estimated Fee Savings": estimateBrotliFeeSavings,
     "Total TXs": totalTxs,
     "Bad TX Results": countBadResults,
@@ -151,7 +151,7 @@ function sleep(ms) {
 const calculateGas = (payload) => {
   totalGas = 0;
   for (const cha of remove0x(payload)) {
-    if (cha === 0) {
+    if (cha === '0') {
       totalGas += 4;
     } else {
       totalGas += 16;
