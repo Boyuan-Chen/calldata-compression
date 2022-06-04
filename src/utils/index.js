@@ -27,7 +27,7 @@ exports.remove0x = (str) => {
   };
 
   exports.brotliCompression = (payload) => {
-    const compressionBuffer = brotli.compress(this.remove0x(payload), {
+    const compressionBuffer = brotli.compress(Buffer.from(payload), {
       mode: 1,
       quality: 11,
     });
@@ -62,5 +62,10 @@ exports.remove0x = (str) => {
     const transaction = await L2Web3.send("eth_getTransactionByHash", [
       transactionHash,
     ]);
+    return transaction;
+  };
+
+  exports.getTransactionFromL1 = async (L1Web3, txHash) => {
+    const transaction = await L1Web3.getTransaction(txHash);
     return transaction;
   };
