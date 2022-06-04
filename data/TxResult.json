@@ -1,11 +1,12 @@
 {
-    "Zlib Compression Ratio": 0.24227272390987475,
-    "Zlib Estimated Fee Savings": -0.08002484985283642,
-    "Zlib Dictionary Compression Ratio": 0.22259776540316123,
-    "Zlib Dictionary Estimated Fee Savings": -0.1096395983289955,
-    "Brotli Compression Ratio": 0.4807061688874469,
-    "Brotli Estimated Fee Savings": 0.2606975085914993,
-    "Total TXs": 99237,
-    "From Block": 545486,
-    "To Block": 645486
-  }
+  "Zlib compression Ratio": 0.2433632761267568,
+  "Zlib Estimated Fee Savings": -0.08151279687768542,
+  "Zlib Dictionary compression Ratio": 0.223665289888328,
+  "Zlib Dictionary Estimated Fee Savings": -0.11125398349103044,
+  "Brotli compression Ratio": 0.25033363384840224,
+  "Brotli Estimated Fee Savings": -0.06480556609537458,
+  "Total TXs": 99196,
+  "Bad TX Results": 107,
+  "From Block": 547915,
+  "To Block": 647915
+}

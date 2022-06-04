@@ -1,5 +1,5 @@
 const ethers = require("ethers");
-const fs = require('fs');
+const fs = require("fs");
 const path = require("path");
 
 const {
@@ -44,7 +44,7 @@ const main = async () => {
   let results = [];
 
   // Settings
-  let searchRange = 1000;
+  let searchRange = 100_000;
   let maxSearchRange = 1000;
   let searchingBlock = latestBlockNumber - searchRange;
 
@@ -59,8 +59,14 @@ const main = async () => {
       promiseInput.push(getTransaction(L2Web3, searchingBlock));
     } else {
       console.log(
-        `Searching Status: \nBlock Range: ${searchingBlock - promiseInput.length}-${searchingBlock} \nRatio: ${
-          Number((1 - (latestBlockNumber - searchingBlock) / searchRange).toFixed(4)) * 100 + "%"
+        `Searching Status: \nBlock Range: ${
+          searchingBlock - promiseInput.length
+        }-${searchingBlock} \nRatio: ${
+          Number(
+            (1 - (latestBlockNumber - searchingBlock) / searchRange).toFixed(4)
+          ) *
+            100 +
+          "%"
         }`
       );
       results = [...(await Promise.allSettled(promiseInput)), ...results];
@@ -107,12 +113,11 @@ const main = async () => {
         zlibDictionaryCompression(rawTransaction);
 
       // Store byte length
-      totalPreBytes += remove0x(rawTransaction).length;
-      totalCompressionBytes.brotli += remove0x(brotliCompressionResult).length;
-      totalCompressionBytes.zlib += remove0x(zlibCompressionResult).length;
-      totalCompressionBytes.zlibDictionary += remove0x(
-        zlibDictionaryCompressionResult
-      ).length;
+      totalPreBytes += rawTransaction.length;
+      totalCompressionBytes.brotli += brotliCompressionResult.length;
+      totalCompressionBytes.zlib += zlibCompressionResult.length;
+      totalCompressionBytes.zlibDictionary +=
+        zlibDictionaryCompressionResult.length;
 
       // Store gas cost
       totalPreGasCost += calculateGas(rawTransaction);
@@ -124,11 +129,8 @@ const main = async () => {
     }
   }
 
-  const dumpPath = path.resolve(__dirname, '../data/transactionsData.json')
-  await fs.promises.writeFile(
-    dumpPath,
-    JSON.stringify(rawTransactions),
-  )
+  const dumpPath = path.resolve(__dirname, "../data/transactionsData.json");
+  await fs.promises.writeFile(dumpPath, JSON.stringify(rawTransactions));
 
   // Final report
   const estimateZlibFeeSavings =

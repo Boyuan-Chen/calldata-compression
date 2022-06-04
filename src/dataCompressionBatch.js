@@ -2,13 +2,12 @@ const ethers = require("ethers");
 require("dotenv").config();
 
 const {
-  remove0x,
   sleep,
   calculateGas,
   brotliCompression,
   zlibCompression,
   zlibDictionaryCompression,
-  getTransaction,
+  getTransactionFromL1,
 } = require("./utils");
 
 const L1_NODE_WEB3_URL = process.env.L1_NODE_WEB3_URL;
@@ -34,23 +33,26 @@ const main = async () => {
   );
 
   // Calculate compression rate
-  let totalPreBytes = [];
-  let totalCompressionBytes = [];
+  let totalPreBytes = 0;
+  let totalCompressionBytes = {
+    brotli: 0,
+    zlib: 0,
+    zlibDictionary: 0,
+  };
 
   // Calculate gas saving
-  let totalPreGasCost = [];
-  let totalCompressionGasCost = [];
+  let totalPreGasCost = 0;
+  let totalCompressionGasCost = {
+    brotli: 0,
+    zlib: 0,
+    zlibDictionary: 0,
+  };
 
-  // Promise
-  let promiseInput = [];
+  // Result
   let results = [];
 
   // Settings
-  let searchRange = 100000;
-
-  // Count
-  let searchingEvent = 0;
-  let resultCount = 0;
+  let searchRange = 100_000;
 
   const transactionBatchAppendedEvents = await CTCContract.queryFilter(
     CTCContract.filters.TransactionBatchAppended(),
@@ -62,152 +64,55 @@ const main = async () => {
 
   // Sort out data for each event
   for (const event of transactionBatchAppendedEvents) {
-    const _prevTotalElements = event.args._prevTotalElements;
-    const _batchSize = event.args._batchSize;
-    console.log(
-      `\nSearching Status: Block Range: ${_prevTotalElements.toNumber()}-${
-        _prevTotalElements.toNumber() + _batchSize.toNumber()
-      } Progess: ${
-        Number(
-          (searchingEvent / transactionBatchAppendedEvents.length).toFixed(4)
-        ) *
-          100 +
-        "%"
-      }`
-    );
-    for (let i = 0; i < _batchSize.toNumber(); i++) {
-      promiseInput.push(
-        getTransaction(L2Web3, _prevTotalElements.toNumber() + i)
-      );
-    }
-    results.push(await Promise.allSettled(promiseInput));
-    await sleep(5000);
-    searchingEvent++;
+    results.push(await getTransactionFromL1(L1Web3, event.transactionHash));
+    await sleep(1000);
   }
 
   for (const result of results) {
-    if (typeof totalCompressionBytes[resultCount] === "undefined") {
-      totalPreBytes[resultCount] = 0;
-      totalCompressionBytes[resultCount] = {
-        brotli: 0,
-        zlib: 0,
-        zlibDictionary: 0,
-      };
-      totalPreGasCost[resultCount] = 0;
-      totalCompressionGasCost[resultCount] = {
-        brotli: 0,
-        zlib: 0,
-        zlibDictionary: 0,
-      };
-    }
-    for (const transactions of result) {
-      const transaction = transactions.value;
-      if (typeof transactions.value === "undefined") {
-        continue;
-      }
-      if (transaction.queueOrigin === "sequencer") {
-        const turing = transaction.l1Turing;
-        let rawTransaction = transaction.rawTransaction;
-        const turingVersion = "01";
-        if (turing.length > 4) {
-          const headerTuringLengthField = remove0x(
-            ethers.BigNumber.from(remove0x(turing).length / 2).toHexString()
-          ).padStart(4, "0");
-          if (headerTuringLengthField.length > 4) {
-            throw new Error("Turing length error!");
-          }
-          rawTransaction =
-            "0x" +
-            turingVersion +
-            headerTuringLengthField +
-            remove0x(rawTransaction) +
-            remove0x(turing);
-        } else {
-          rawTransaction =
-            "0x" + turingVersion + "0000" + remove0x(rawTransaction);
-        }
+    const rawTransaction = result.data;
 
-        // Compression algorithm
-        brotliCompressionResult = brotliCompression(rawTransaction);
-        zlibCompressionResult = zlibCompression(rawTransaction);
-        zlibDictionaryCompressionResult =
-          zlibDictionaryCompression(rawTransaction);
+    // Compression algorithm
+    brotliCompressionResult = brotliCompression(rawTransaction);
+    zlibCompressionResult = zlibCompression(rawTransaction);
+    zlibDictionaryCompressionResult = zlibDictionaryCompression(rawTransaction);
 
-        // Store byte length
-        totalPreBytes[resultCount] += remove0x(rawTransaction).length;
-        totalCompressionBytes[resultCount].brotli += remove0x(
-          brotliCompressionResult
-        ).length;
-        totalCompressionBytes[resultCount].zlib += remove0x(
-          zlibCompressionResult
-        ).length;
-        totalCompressionBytes[resultCount].zlibDictionary += remove0x(
-          zlibDictionaryCompressionResult
-        ).length;
+    // Store byte length
+    totalPreBytes += rawTransaction.length;
+    totalCompressionBytes.brotli += brotliCompressionResult.length;
+    totalCompressionBytes.zlib += zlibCompressionResult.length;
+    totalCompressionBytes.zlibDictionary +=
+      zlibDictionaryCompressionResult.length;
 
-        // Store gas cost
-        totalPreGasCost[resultCount] += calculateGas(rawTransaction);
-        totalCompressionGasCost[resultCount].brotli += calculateGas(
-          brotliCompressionResult
-        );
-        totalCompressionGasCost[resultCount].zlib += calculateGas(
-          zlibCompressionResult
-        );
-        totalCompressionGasCost[resultCount].zlibDictionary += calculateGas(
-          zlibDictionaryCompressionResult
-        );
-      }
-    }
-    console.log(`calculated ${resultCount} event!`);
-    resultCount++;
+    // Store gas cost
+    totalPreGasCost += calculateGas(rawTransaction);
+    totalCompressionGasCost.brotli += calculateGas(brotliCompressionResult);
+    totalCompressionGasCost.zlib += calculateGas(zlibCompressionResult);
+    totalCompressionGasCost.zlibDictionary += calculateGas(
+      zlibDictionaryCompressionResult
+    );
   }
 
   // Final report
   const estimateZlibFeeSavings =
-    1 -
-    totalCompressionGasCost.reduce((acc, cur, index) => {
-      return acc + cur.zlib / totalPreGasCost[index];
-    }, 0) /
-      totalCompressionGasCost.length;
-  const compressionZlibRatio =
-    1 -
-    totalCompressionBytes.reduce((acc, cur, index) => {
-      return acc + cur.zlib / totalPreBytes[index];
-    }, 0) /
-      totalCompressionGasCost.length;
+    1 - totalCompressionGasCost.zlib / totalPreGasCost;
+  const compressionZlibRatio = 1 - totalCompressionBytes.zlib / totalPreBytes;
   const estimateZlibDictionaryFeeSavings =
-    1 -
-    totalCompressionGasCost.reduce((acc, cur, index) => {
-      return acc + cur.zlibDictionary / totalPreGasCost[index];
-    }, 0) /
-      totalCompressionGasCost.length;
+    1 - totalCompressionGasCost.zlibDictionary / totalPreGasCost;
   const compressionZlibDictionaryRatio =
-    1 -
-    totalCompressionBytes.reduce((acc, cur, index) => {
-      return acc + cur.zlibDictionary / totalPreBytes[index];
-    }, 0) /
-      totalCompressionGasCost.length;
+    1 - totalCompressionBytes.zlibDictionary / totalPreBytes;
   const estimateBrotliFeeSavings =
-    1 -
-    totalCompressionGasCost.reduce((acc, cur, index) => {
-      return acc + cur.brotli / totalPreGasCost[index];
-    }, 0) /
-      totalCompressionGasCost.length;
+    1 - totalCompressionGasCost.brotli / totalPreGasCost;
   const compressionBrotliRatio =
-    1 -
-    totalCompressionBytes.reduce((acc, cur, index) => {
-      return acc + cur.brotli / totalPreBytes[index];
-    }, 0) /
-      totalCompressionGasCost.length;
+    1 - totalCompressionBytes.brotli / totalPreBytes;
 
   console.log({
-    "Zlib Compression Ratio": compressionZlibRatio,
+    "Zlib compression Ratio": compressionZlibRatio,
     "Zlib Estimated Fee Savings": estimateZlibFeeSavings,
-    "Zlib Dictionary Compression Ratio": compressionZlibDictionaryRatio,
+    "Zlib Dictionary compression Ratio": compressionZlibDictionaryRatio,
     "Zlib Dictionary Estimated Fee Savings": estimateZlibDictionaryFeeSavings,
-    "Brotli Compression Ratio": compressionBrotliRatio,
+    "Brotli compression Ratio": compressionBrotliRatio,
     "Brotli Estimated Fee Savings": estimateBrotliFeeSavings,
-    "Total Batches": resultCount,
+    "Total Events": transactionBatchAppendedEvents.length,
   });
 };
 
