@@ -4,7 +4,6 @@ const path = require("path");
 require("dotenv").config();
 
 const {
-  sleep,
   calculateGas,
   brotliCompression,
   zlibCompression,
@@ -53,6 +52,8 @@ const main = async () => {
   // Result
   let results = [];
   let rawTransactionData = [];
+  let zlibCompressionRawTransactionData = [];
+  let brotliCompressionRawTransactionData = [];
 
   // Settings
   let searchRange = 100_000;
@@ -68,7 +69,6 @@ const main = async () => {
   // Sort out data for each event
   for (const event of transactionBatchAppendedEvents) {
     results.push(await getTransactionFromL1(L1Web3, event.transactionHash));
-    await sleep(1000);
   }
 
   for (const result of results) {
@@ -81,6 +81,9 @@ const main = async () => {
     brotliCompressionResult = brotliCompression(rawTransaction);
     zlibCompressionResult = zlibCompression(rawTransaction);
     zlibDictionaryCompressionResult = zlibDictionaryCompression(rawTransaction);
+
+    zlibCompressionRawTransactionData.push(zlibCompressionResult)
+    brotliCompressionRawTransactionData.push(brotliCompressionResult)
 
     // Store byte length
     totalPreBytes += rawTransaction.length;
@@ -98,8 +101,14 @@ const main = async () => {
     );
   }
 
-  const dumpPath = path.resolve(__dirname, "../data/BatchData.json");
+  const dumpPath = path.resolve(__dirname, "../data/batchTxData.json");
   await fs.promises.writeFile(dumpPath, JSON.stringify(rawTransactionData));
+
+  const dumpZlibPath = path.resolve(__dirname, "../data/zlibBatchData.json");
+  await fs.promises.writeFile(dumpZlibPath, JSON.stringify(zlibCompressionRawTransactionData));
+
+  const dumpBrotliPath = path.resolve(__dirname, "../data/brotliBatchData.json");
+  await fs.promises.writeFile(dumpBrotliPath, JSON.stringify(brotliCompressionRawTransactionData));
 
   // Final report
   const estimateZlibFeeSavings =
