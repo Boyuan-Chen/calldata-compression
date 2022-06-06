@@ -157,7 +157,7 @@ const main = async () => {
     );
   }
 
-  await dumpFile("../data/batchTxData.json", rawTransactionData);
+  await dumpFile("../../data/batchTxData.json", rawTransactionData);
   await dumpFile("../../data/zlibBatchData.json", zlibCompressionRawTransactionData);
   await dumpFile("../../data/brotliBatchData.json", brotliCompressionRawTransactionData);
 
