@@ -1,19 +1,12 @@
-const fs = require("fs");
-const path = require("path");
-
-const { brotliDecompress, zlibDecompress } = require("./utils");
+const { brotliDecompress, zlibDecompress, loadFile } = require("./utils");
 
 const main = async () => {
-  const dumpZlibPath = path.resolve(__dirname, "../data/zlibBatchData.json");
-  const zlibCompressionJsonRaw = await fs.promises.readFile(dumpZlibPath);
-  const zlibCompression = JSON.parse(zlibCompressionJsonRaw.toString());
-
-  const dumpBrotliPath = path.resolve(
-    __dirname,
-    "../data/brotliBatchData.json"
-  );
-  const brotliCompressionJsonRaw = await fs.promises.readFile(dumpBrotliPath);
-  const brotliCompression = JSON.parse(brotliCompressionJsonRaw.toString());
+  const zlibCompression = await loadFile("../../data/zlibBatchData.json")
+  const brotliCompression = await loadFile("../../data/brotliBatchData.json")
+  const maxBrotliCompression = await loadFile("../../data/maxBrotliCompressionData.json")
+  const minBrotliCompression = await loadFile("../../data/minBrotliCompressionData.json")
+  const maxZlibCompression = await loadFile("../../data/maxZlibCompressionData.json")
+  const minZlibCompression = await loadFile("../../data/minZlibCompressionData.json")
 
   // Loop Count
   const loopCount = 5;
@@ -32,17 +25,9 @@ const main = async () => {
     end = new Date().getTime();
     totalTime += end - start;
 
-    console.log(
-      `Brotli Decompression Execution Time: ${end - start} ms | Loop: ${
-        i + 1
-      } time`
-    );
+    console.log(`Brotli Decompression Execution Time: ${end - start} ms | Loop: ${i + 1} time`);
   }
-  console.log(
-    `Brotli Decompression Speed Test: ${
-      totalTime / loopCount
-    } ms | Loop: ${loopCount}`
-  );
+  console.log(`Brotli Decompression Speed Test: ${totalTime / loopCount} ms | Loop: ${loopCount}`);
 
   totalTime = 0;
   avgTime = 0;
@@ -57,17 +42,78 @@ const main = async () => {
     end = new Date().getTime();
     totalTime += end - start;
 
-    console.log(
-      `Brotli Decompression Execution Time: ${end - start} ms | Loop: ${
-        i + 1
-      } time`
-    );
+    console.log(`Brotli Decompression Execution Time: ${end - start} ms | Loop: ${i + 1} time`);
   }
-  console.log(
-    `Brotli Decompression Speed Test: ${
-      totalTime / loopCount
-    } ms | Loop: ${loopCount}`
-  );
+  console.log(`Brotli Decompression Speed Test: ${totalTime / loopCount} ms | Loop: ${loopCount}`);
+
+  totalTime = 0;
+  avgTime = 0;
+
+  for (let i = 0; i < loopCount; i++) {
+    start = new Date().getTime();
+
+    for (const payload of maxBrotliCompression) {
+      brotliDecompress(payload);
+    }
+
+    end = new Date().getTime();
+    totalTime += end - start;
+
+    console.log(`Brotli Decompression Execution Time: ${end - start} ms | Loop: ${i + 1} time (worst case)`);
+  }
+  console.log(`Brotli Decompression Speed Test: ${totalTime / loopCount} ms | Loop: ${loopCount} (worst case)`);
+
+  totalTime = 0;
+  avgTime = 0;
+
+  for (let i = 0; i < loopCount; i++) {
+    start = new Date().getTime();
+
+    for (const payload of minBrotliCompression) {
+      brotliDecompress(payload);
+    }
+
+    end = new Date().getTime();
+    totalTime += end - start;
+
+    console.log(`Brotli Decompression Execution Time: ${end - start} ms | Loop: ${i + 1} time (best case)`);
+  }
+  console.log(`Brotli Decompression Speed Test: ${totalTime / loopCount} ms | Loop: ${loopCount} (best case)`);
+
+  totalTime = 0;
+  avgTime = 0;
+
+  for (let i = 0; i < loopCount; i++) {
+    start = new Date().getTime();
+
+    for (const payload of maxZlibCompression) {
+      zlibDecompress(payload);
+    }
+
+    end = new Date().getTime();
+    totalTime += end - start;
+
+    console.log(`Brotli Decompression Execution Time: ${end - start} ms | Loop: ${i + 1} time (worst case)`);
+  }
+  console.log(`Brotli Decompression Speed Test: ${totalTime / loopCount} ms | Loop: ${loopCount} (worst case)`);
+
+  totalTime = 0;
+  avgTime = 0;
+
+  for (let i = 0; i < loopCount; i++) {
+    start = new Date().getTime();
+
+    for (const payload of minZlibCompression) {
+        zlibDecompress(payload);
+    }
+
+    end = new Date().getTime();
+    totalTime += end - start;
+
+    console.log(`Brotli Decompression Execution Time: ${end - start} ms | Loop: ${i + 1} time (best case)`);
+  }
+  console.log(`Brotli Decompression Speed Test: ${totalTime / loopCount} ms | Loop: ${loopCount} (best case)`);
+
 };
 
 main();

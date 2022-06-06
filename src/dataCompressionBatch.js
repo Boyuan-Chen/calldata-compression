@@ -1,6 +1,4 @@
 const ethers = require("ethers");
-const fs = require("fs");
-const path = require("path");
 require("dotenv").config();
 
 const {
@@ -9,6 +7,7 @@ const {
   zlibCompression,
   zlibDictionaryCompression,
   getTransactionFromL1,
+  dumpFile,
 } = require("./utils");
 
 const L1_NODE_WEB3_URL = process.env.L1_NODE_WEB3_URL;
@@ -67,9 +66,66 @@ const main = async () => {
   console.log(`Total events: ${transactionBatchAppendedEvents.length}`);
 
   // Sort out data for each event
+  let maxBatchSize = 0;
+  let minBatchSize = 0;
+
+  let maxBatchTransactionHash = null;
+  let minBatchTransactionHash = null;
+
+  let maxBatchTransaction = null;
+  let minBatchTransaction = null;
+
   for (const event of transactionBatchAppendedEvents) {
+    const _batchSize = event.args._batchSize.toNumber();
+    if (_batchSize > maxBatchSize) {
+      maxBatchSize = _batchSize;
+      maxBatchTransactionHash = event.transactionHash;
+    }
+    if (_batchSize < minBatchSize || minBatchSize === 0) {
+      minBatchSize = _batchSize;
+      minBatchTransactionHash = event.transactionHash;
+    }
     results.push(await getTransactionFromL1(L1Web3, event.transactionHash));
   }
+
+  maxBatchTransaction = await getTransactionFromL1(
+    L1Web3,
+    maxBatchTransactionHash
+  );
+  minBatchTransaction = await getTransactionFromL1(
+    L1Web3,
+    minBatchTransactionHash
+  );
+
+  maxBrotliCompressionResult = brotliCompression(maxBatchTransaction.data);
+  maxZlibCompressionResult = zlibCompression(maxBatchTransaction.data);
+  minBrotliCompressionResult = brotliCompression(minBatchTransaction.data);
+  minZlibCompressionResult = zlibCompression(minBatchTransaction.data);
+
+  maxBrotliCompressionPayload = [];
+  maxZlibCompressionPayload = [];
+  minBrotliCompressionPayload = [];
+  minZlibCompressionPayload = [];
+
+  // create an one hundred payload
+  for (let i = 0; i < 100; i++) {
+    maxBrotliCompressionPayload.push(maxBrotliCompressionResult);
+    maxZlibCompressionPayload.push(maxZlibCompressionResult);
+    minBrotliCompressionPayload.push(minBrotliCompressionResult);
+    minZlibCompressionPayload.push(minZlibCompressionResult);
+  }
+
+  await dumpFile("../../data/maxBrotliCompressionData.json", maxBrotliCompressionPayload);
+  await dumpFile("../../data/maxZlibCompressionData.json", maxZlibCompressionPayload);
+  await dumpFile("../../data/minBrotliCompressionData.json", minBrotliCompressionPayload);
+  await dumpFile("../../data/minZlibCompressionData.json", minZlibCompressionPayload);
+
+  console.log({
+    maxBatchSize,
+    minBatchSize,
+    maxBatchTransactionHash,
+    minBatchTransactionHash,
+  });
 
   for (const result of results) {
     const rawTransaction = result.data;
@@ -82,8 +138,8 @@ const main = async () => {
     zlibCompressionResult = zlibCompression(rawTransaction);
     zlibDictionaryCompressionResult = zlibDictionaryCompression(rawTransaction);
 
-    zlibCompressionRawTransactionData.push(zlibCompressionResult)
-    brotliCompressionRawTransactionData.push(brotliCompressionResult)
+    zlibCompressionRawTransactionData.push(zlibCompressionResult);
+    brotliCompressionRawTransactionData.push(brotliCompressionResult);
 
     // Store byte length
     totalPreBytes += rawTransaction.length;
@@ -101,14 +157,9 @@ const main = async () => {
     );
   }
 
-  const dumpPath = path.resolve(__dirname, "../data/batchTxData.json");
-  await fs.promises.writeFile(dumpPath, JSON.stringify(rawTransactionData));
-
-  const dumpZlibPath = path.resolve(__dirname, "../data/zlibBatchData.json");
-  await fs.promises.writeFile(dumpZlibPath, JSON.stringify(zlibCompressionRawTransactionData));
-
-  const dumpBrotliPath = path.resolve(__dirname, "../data/brotliBatchData.json");
-  await fs.promises.writeFile(dumpBrotliPath, JSON.stringify(brotliCompressionRawTransactionData));
+  await dumpFile("../data/batchTxData.json", rawTransactionData);
+  await dumpFile("../../data/zlibBatchData.json", zlibCompressionRawTransactionData);
+  await dumpFile("../../data/brotliBatchData.json", brotliCompressionRawTransactionData);
 
   // Final report
   const estimateZlibFeeSavings =

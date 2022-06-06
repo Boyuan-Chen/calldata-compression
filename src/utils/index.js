@@ -3,6 +3,9 @@ const brotli = require("brotli");
 // https://nodejs.org/api/zlib.html
 const zlib = require("zlib");
 
+const fs = require("fs");
+const path = require("path");
+
 exports.remove0x = (str) => {
   if (str === undefined) {
     return str;
@@ -80,4 +83,18 @@ exports.zlibDecompress = (payload) => {
   const compressionUint8Array = Uint8Array.from(Buffer.from(payload, "hex"));
   decompressionBuffer = zlib.inflateSync(compressionUint8Array);
   return Buffer.from(decompressionBuffer).toString("utf-8");
+};
+
+exports.dumpFile = async (filePath, data) => {
+  const dumpPath = path.resolve(__dirname, filePath);
+  await fs.promises.writeFile(dumpPath, JSON.stringify(data));
+};
+
+exports.loadFile = async (filePath) => {
+  const dumpPath = path.resolve(
+    __dirname,
+    filePath
+  );
+  const jsonRaw = await fs.promises.readFile(dumpPath);
+  return JSON.parse(jsonRaw.toString());
 };
