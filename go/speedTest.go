@@ -58,7 +58,7 @@ func main() {
 		panic("Failed to decode transaction json: " + err.Error())
 	}
 
-	bacthRawData, err := ioutil.ReadFile("../data/batchData.json")
+	bacthRawData, err := ioutil.ReadFile("../data/batchTxData.json")
 	if err != nil {
 		panic("Failed to load data: " + err.Error())
 	}
