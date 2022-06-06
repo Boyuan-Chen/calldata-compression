@@ -17,6 +17,7 @@ import (
 
 func main() {
 	type TransactionsData []string
+	type BatchData []string
 
 	type SysInfo struct {
 		Hostname string
@@ -46,15 +47,26 @@ func main() {
 	fmt.Printf("%s\n", string(infoJSON))
 
 	// Read file
-	data, err := ioutil.ReadFile("../data/transactionsData.json")
+	transactionRawData, err := ioutil.ReadFile("../data/transactionsData.json")
 	if err != nil {
 		panic("Failed to load data: " + err.Error())
 	}
 
 	var transactionsData TransactionsData
-	err = json.Unmarshal(data, &transactionsData)
+	err = json.Unmarshal(transactionRawData, &transactionsData)
 	if err != nil {
-		panic("Failed to decode json: " + err.Error())
+		panic("Failed to decode transaction json: " + err.Error())
+	}
+
+	bacthRawData, err := ioutil.ReadFile("../data/batchData.json")
+	if err != nil {
+		panic("Failed to load data: " + err.Error())
+	}
+
+	var batchData BatchData
+	err = json.Unmarshal(bacthRawData, &batchData)
+	if err != nil {
+		panic("Failed to decode batch json: " + err.Error())
 	}
 
 	// Loop Count
@@ -102,6 +114,64 @@ func main() {
 		for _, transaction := range transactionsData {
 			var in bytes.Buffer
 			b := []byte(transaction)
+			w := brotli.NewWriterLevel(&in, 11)
+			w.Write(b)
+			w.Close()
+		}
+
+		end := time.Now()
+		totalTime += end.Sub(start)
+
+		fmt.Println("Execution Duration: ", end.Sub(start), " | Loop: ", i+1, " time")
+	}
+	fmt.Println("\nTotal Time: ", totalTime.String(), " | Loop: ", loopCount)
+	avgTime = totalTime / time.Duration(loopCount)
+	fmt.Println("Average Time:", avgTime)
+	fmt.Println("\n-------------------------------------")
+
+	fmt.Println("\nBatch Speed Test:")
+
+	fmt.Println("\n-------------------------------------")
+
+	fmt.Println("\nTotal TXs:", len(batchData), " | Loop: ", loopCount)
+
+	fmt.Println("\n-------------------------------------")
+
+	fmt.Println("\nZlib Speed Test:")
+
+	totalTime = time.Duration(0)
+	avgTime = time.Duration(0)
+
+	for i := 0; i < loopCount; i++ {
+		start := time.Now()
+
+		for _, batch := range batchData {
+			var in bytes.Buffer
+			b := []byte(batch)
+			w := zlib.NewWriter(&in)
+			w.Write(b)
+			w.Close()
+		}
+
+		end := time.Now()
+		totalTime += end.Sub(start)
+	}
+	fmt.Println("\nTotal Time: ", totalTime.String(), " | Loop: ", loopCount)
+	avgTime = totalTime / time.Duration(loopCount)
+	fmt.Println("Average Time:", avgTime)
+	fmt.Println("\n-------------------------------------")
+
+	totalTime = time.Duration(0)
+	avgTime = time.Duration(0)
+
+	fmt.Println("\nBrotli Speed Test:")
+
+	for i := 0; i < loopCount; i++ {
+		start := time.Now()
+
+		for _, batch := range batchData {
+			var in bytes.Buffer
+			b := []byte(batch)
 			w := brotli.NewWriterLevel(&in, 11)
 			w.Write(b)
 			w.Close()

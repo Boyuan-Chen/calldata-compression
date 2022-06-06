@@ -1,4 +1,6 @@
 const ethers = require("ethers");
+const fs = require("fs");
+const path = require("path");
 require("dotenv").config();
 
 const {
@@ -50,6 +52,7 @@ const main = async () => {
 
   // Result
   let results = [];
+  let rawTransactionData = [];
 
   // Settings
   let searchRange = 100_000;
@@ -71,6 +74,9 @@ const main = async () => {
   for (const result of results) {
     const rawTransaction = result.data;
 
+    // Push data
+    rawTransactionData.push(rawTransaction);
+
     // Compression algorithm
     brotliCompressionResult = brotliCompression(rawTransaction);
     zlibCompressionResult = zlibCompression(rawTransaction);
@@ -91,6 +97,9 @@ const main = async () => {
       zlibDictionaryCompressionResult
     );
   }
+
+  const dumpPath = path.resolve(__dirname, "../data/BatchData.json");
+  await fs.promises.writeFile(dumpPath, JSON.stringify(rawTransactionData));
 
   // Final report
   const estimateZlibFeeSavings =
