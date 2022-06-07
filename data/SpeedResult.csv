@@ -1,9 +1,0 @@
-Algorithm,Method, Number of Batches, Code Base,Time Duration
-zlib,compression,424,go,445.014418ms
-Brotli,compression,424,go,1.209751709s
-zlib,decompression,424,node,372.4ms
-Brotli,decompression,424,node,69.6ms
-Brotli(worst case),decompression,100,node,166.8ms
-Brotli(best case),decompression,100,node,32.2ms
-Zlib(worst case),decompression,100,node,42.4ms
-Zlib(best case),decompression,100,node,1.6ms
