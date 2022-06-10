@@ -42,9 +42,9 @@ const main = async () => {
     end = new Date().getTime();
     totalTime += end - start;
 
-    console.log(`Brotli Decompression Execution Time: ${end - start} ms | Loop: ${i + 1} time`);
+    console.log(`Zlib Decompression Execution Time: ${end - start} ms | Loop: ${i + 1} time`);
   }
-  console.log(`Brotli Decompression Speed Test: ${totalTime / loopCount} ms | Loop: ${loopCount}`);
+  console.log(`Zlib Decompression Speed Test: ${totalTime / loopCount} ms | Loop: ${loopCount}`);
 
   totalTime = 0;
   avgTime = 0;
@@ -93,9 +93,9 @@ const main = async () => {
     end = new Date().getTime();
     totalTime += end - start;
 
-    console.log(`Brotli Decompression Execution Time: ${end - start} ms | Loop: ${i + 1} time (worst case)`);
+    console.log(`Zlib Decompression Execution Time: ${end - start} ms | Loop: ${i + 1} time (worst case)`);
   }
-  console.log(`Brotli Decompression Speed Test: ${totalTime / loopCount} ms | Loop: ${loopCount} (worst case)`);
+  console.log(`Zlib Decompression Speed Test: ${totalTime / loopCount} ms | Loop: ${loopCount} (worst case)`);
 
   totalTime = 0;
   avgTime = 0;

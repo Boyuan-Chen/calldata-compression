@@ -55,7 +55,7 @@ const main = async () => {
   let brotliCompressionRawTransactionData = [];
 
   // Settings
-  let searchRange = 100_000;
+  let searchRange = 1000_000;
 
   // total batch size
   let totalBatchSize = 0;
@@ -82,6 +82,9 @@ const main = async () => {
   let maxBatchTransaction = null;
   let minBatchTransaction = null;
 
+  // promise
+  let index = 0;
+
   for (const event of transactionBatchAppendedEvents) {
     const _batchSize = event.args._batchSize.toNumber();
     if (_batchSize > maxBatchSize) {
@@ -92,13 +95,19 @@ const main = async () => {
       minBatchSize = _batchSize;
       minBatchTransactionHash = event.transactionHash;
     }
-    const transaction = await getTransactionFromL1(L1Web3, event.transactionHash);
-    results.push(transaction);
-    if (_batchSize > 100) {
-      batchSizeLargerThan100.push(transaction);
-      totalBatchSizeLagerThan100 += _batchSize;
+    try {
+      const transaction = await getTransactionFromL1(L1Web3, event.transactionHash);
+      results.push(transaction);
+      if (_batchSize > 100) {
+        batchSizeLargerThan100.push(transaction);
+        totalBatchSizeLagerThan100 += _batchSize;
+      }
+    } catch (err) {
+      console.log(err);
     }
     totalBatchSize += _batchSize;
+    index++;
+    console.log(`${index} / ${transactionBatchAppendedEvents.length}`)
   }
 
   maxBatchTransaction = await getTransactionFromL1(

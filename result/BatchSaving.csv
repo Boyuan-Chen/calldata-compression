@@ -1,7 +1,7 @@
 Algorithm,Mode,Dictionary?,Compression Rate,Estimated Fee Savings
-zlib,total,no,50.77%,28.49%
-zlib,total,yes,50.75%,28.47%
-Brotli,total,no,60.14%,42.82%
-zlib,batch size > 100,no,53.50%,30.84%
-zlib,batch size > 100,yes,53.49%,30.82%
-Brotli,batch size > 100,no,62.66%,45.06%
+zlib,total,no,51.08%,29.47%
+zlib,total,yes,51.05%,29.44%
+Brotli,total,no,59.93%,42.96%
+zlib,batch size > 100,no,52.58%,30.71%
+zlib,batch size > 100,yes,52.57%,30.69%
+Brotli,batch size > 100,no,61.55%,44.40%
